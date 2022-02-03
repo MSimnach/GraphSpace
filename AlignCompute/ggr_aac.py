@@ -182,8 +182,7 @@ class ggr_aac(aligncompute):
 
     # Align wrt a geodesic
     def align_pred(self, y_pred, i, k):
-        temp_graph = copy.deepcopy(self.aX.X[i])
-        temp_matcher = copy.deepcopy(self.matcher)
+        temp = copy.deepcopy(self)
         # self.f.clear()
         # the alignment wrt a geodesic aiming at predicting data is an alignment wrt the prediction along
         # the regression gamma(x_i) and the data point itself y_i
@@ -207,12 +206,12 @@ class ggr_aac(aligncompute):
         y_pred_net = self.give_me_a_network(y_pred.iloc[i], self.aX.node_attr, self.aX.edge_attr)
         # Regression error:
         match = ID(self.distance)
-        self.regression_error[i, k] = match.dis(temp_graph, y_pred_net)
+        self.regression_error[i, k] = match.dis(temp.aX.X[i], y_pred_net)
         print("regression error" + str(i))
-        self.postalignment_error[i, k] = temp_matcher.dis(temp_graph, y_pred_net)
-        self.f[i] = temp_matcher.f
+        self.postalignment_error[i, k] = temp.matcher.dis(temp.aX.X[i], y_pred_net)
+        self.f[i] = temp.matcher.f
         print("alignment error" + str(i))
-        del (temp_matcher, temp_graph, y_pred_net, match)
+        del (temp, y_pred_net, match)
 
     # Compute the generalized geodesic regression on the total space as a regression of the aligned graph set
     def est(self, k):
@@ -340,15 +339,14 @@ class ggr_aac(aligncompute):
     # optimal permutation
     def two_net_match(self, X2, i, first_id):
         print("Matching Element" + str(i))
-        temp_matcher = copy.deepcopy(self.matcher)
-        temp_graph = copy.deepcopy(self.aX.X[i])
+        temp = copy.deepcopy(self)
         if (i == first_id):
             self.f[first_id] = range(self.aX.n_nodes)
             print("Aligned" + str(i))
         # Align X to Y
         else:
-            temp_matcher.dis(temp_graph, X2)
+            temp.matcher.dis(temp.aX.X[i], X2)
             # Permutation of X to go closer to Y
-            self.f[i] = temp_matcher.f
+            self.f[i] = temp.matcher.f
             print("Aligned" + str(i))
-        del temp_matcher, temp_graph
+        del temp
