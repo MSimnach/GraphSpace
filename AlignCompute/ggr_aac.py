@@ -84,14 +84,14 @@ class ggr_aac(aligncompute):
         # Compute the first Generalized Geodesic Regression line
         E_1 = self.est(k=0)
         # Align the set wrt the geodesic
-        Parallel(n_jobs=1, verbose=1, require='sharedmem')(
+        Parallel(n_jobs=4, verbose=1, require='sharedmem')(
             delayed(self.align_pred)(E_1[1], i, 0) for i in range(self.aX.size()))
         # AAC iterative algorithm
         for k in range(1, self.nr_iterations):
             # Compute the first Generalized Geodesic Regression line
             E_2 = self.est(k)
             # Align the set wrt the geodesic
-            Parallel(n_jobs=1, verbose=1, require='sharedmem')(
+            Parallel(n_jobs=4, verbose=1, require='sharedmem')(
                 delayed(self.align_pred)(E_2[1], i, k) for i in range(self.aX.size()))
             # sequential version: self.align_pred(E_2[1],k)
             # Compute the step: the algorithmic step is computed as the square difference between the coefficients
@@ -182,6 +182,7 @@ class ggr_aac(aligncompute):
 
     # Align wrt a geodesic
     def align_pred(self, y_pred, i, k):
+        temp = copy.deepcopy(self)
         # self.f.clear()
         # the alignment wrt a geodesic aiming at predicting data is an alignment wrt the prediction along
         # the regression gamma(x_i) and the data point itself y_i
@@ -202,13 +203,13 @@ class ggr_aac(aligncompute):
         #     del(y_pred_net,match)
         # Parallel Version: see the function at the end of the code
         # transform the estimation into a network to compute the networks distances
-        y_pred_net = self.give_me_a_network(y_pred.iloc[i], self.aX.node_attr, self.aX.edge_attr)
+        y_pred_net = temp.give_me_a_network(y_pred.iloc[i], temp.aX.node_attr, temp.aX.edge_attr)
         # Regression error:
         match = ID(self.distance)
-        self.regression_error[i, k] = match.dis(self.aX.X[i], y_pred_net)
+        self.regression_error[i, k] = match.dis(temp.aX.X[i], y_pred_net)
         print("regression error" + str(i))
-        self.postalignment_error[i, k] = self.matcher.dis(self.aX.X[i], y_pred_net)
-        self.f[i] = self.matcher.f
+        self.postalignment_error[i, k] = temp.matcher.dis(temp.aX.X[i], y_pred_net)
+        self.f[i] = temp.matcher.f
         print("alignment error" + str(i))
         del (y_pred_net, match)
 
