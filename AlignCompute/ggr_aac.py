@@ -204,7 +204,7 @@ class ggr_aac(aligncompute):
         #     del(y_pred_net,match)
         # Parallel Version: see the function at the end of the code
         # transform the estimation into a network to compute the networks distances
-        y_pred_net = temp.give_me_a_network(y_pred.iloc[i], temp.aX.node_attr, temp.aX.edge_attr)
+        y_pred_net = self.give_me_a_network(y_pred.iloc[i], self.aX.node_attr, self.aX.edge_attr)
         # Regression error:
         match = ID(self.distance)
         self.regression_error[i, k] = match.dis(temp_graph, y_pred_net)
