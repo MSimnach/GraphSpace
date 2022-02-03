@@ -79,19 +79,19 @@ class ggr_aac(aligncompute):
         # # Parallel Version:
         # if(self.parallel=True):
 
-        Parallel(n_jobs=1, verbose=1, require='sharedmem')(
+        Parallel(n_jobs=8, verbose=1, require='sharedmem')(
             delayed(self.two_net_match)(m_1, i, first_id) for i in range(self.aX.size()))
         # Compute the first Generalized Geodesic Regression line
         E_1 = self.est(k=0)
         # Align the set wrt the geodesic
-        Parallel(n_jobs=4, verbose=1, require='sharedmem')(
+        Parallel(n_jobs=8, verbose=1, require='sharedmem')(
             delayed(self.align_pred)(E_1[1], i, 0) for i in range(self.aX.size()))
         # AAC iterative algorithm
         for k in range(1, self.nr_iterations):
             # Compute the first Generalized Geodesic Regression line
             E_2 = self.est(k)
             # Align the set wrt the geodesic
-            Parallel(n_jobs=4, verbose=1, require='sharedmem')(
+            Parallel(n_jobs=8, verbose=1, require='sharedmem')(
                 delayed(self.align_pred)(E_2[1], i, k) for i in range(self.aX.size()))
             # sequential version: self.align_pred(E_2[1],k)
             # Compute the step: the algorithmic step is computed as the square difference between the coefficients
@@ -211,7 +211,7 @@ class ggr_aac(aligncompute):
         self.postalignment_error[i, k] = temp.matcher.dis(temp.aX.X[i], y_pred_net)
         self.f[i] = temp.matcher.f
         print("alignment error" + str(i))
-        del (y_pred_net, match)
+        del (temp, y_pred_net, match)
 
     # Compute the generalized geodesic regression on the total space as a regression of the aligned graph set
     def est(self, k):
@@ -339,12 +339,14 @@ class ggr_aac(aligncompute):
     # optimal permutation
     def two_net_match(self, X2, i, first_id):
         print("Matching Element" + str(i))
+        temp = copy.deepcopy(self)
         if (i == first_id):
-            self.f[first_id] = range(self.aX.n_nodes)
+            self.f[first_id] = range(temp.aX.n_nodes)
             print("Aligned" + str(i))
         # Align X to Y
         else:
-            self.matcher.dis(self.aX.X[i], X2)
+            temp.matcher.dis(temp.aX.X[i], X2)
             # Permutation of X to go closer to Y
-            self.f[i] = self.matcher.f
+            self.f[i] = temp.matcher.f
             print("Aligned" + str(i))
+        del temp
